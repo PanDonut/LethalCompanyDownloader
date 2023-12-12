@@ -112,6 +112,41 @@ async function DownloadMod(name, uri) {
   }
 }
 
+async function DownloadCrack(uri) {
+  currentState = name;
+  var s = JSON.stringify(size).split("");
+  s.splice(0,9);
+  s.splice(s.indexOf(","), 100)
+  const downloader = new Downloader({
+    url: uri,
+    directory: "./common/crack",
+    onProgress: function (percentage, chunk, remainingSize) {
+      if (lastProgress != Math.floor(percentage) && Math.ceil(percentage) < 99) {
+        lastProgress = Math.floor(percentage);
+        Log(`[${ "■".repeat(Math.round((percentage / 100) * (parseInt(s.join("")) - 2)) / 1) }${" ".repeat(Math.abs((parseInt(s.join("")) - 2) - (Math.floor((percentage / 100) * (parseInt(s.join("")))) + 1)))}]
+        \nRemaining: ${Math.ceil((remainingSize / 1024) / 1024)} mb
+        `);
+      }
+    },
+    onBeforeSave: (name) => {
+      fileName = name;
+    }
+  });
+
+  try {
+    await downloader.download();
+    currentState = "cracking"
+    Log("\n\n\n   Extracting...\n   Please wait")
+    const filePath = path.join(__dirname, "save.dat");
+    const drive = await fs.readFileSync(filePath);
+    await extractRarArchive(`./common/mods/${fileName}`, `${drive}:/Games/Lethal Company`);
+    const audioFilePath = path.join(__dirname, "assets/IcecreamTruckV2.wav");
+    await playAudioFile(audioFilePath);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function ExecuteCommand(command, data) {
   const cmd = command.toLowerCase();
   if (command.split("").length >= 3) {
@@ -129,8 +164,7 @@ async function ExecuteCommand(command, data) {
         });
       });
       bar.then(async () => {
-        const audioFilePath = path.join(__dirname, "assets/IcecreamTruckV2.wav");
-        await playAudioFile(audioFilePath);
+        DownloadCrack(data.data.crack)
       });      
     } else if ("help".includes(cmd)) {
       Init()
