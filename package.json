@@ -24,6 +24,7 @@
     "audic": "^3.0.2",
     "axios": "^1.6.2",
     "chalk": "^5.3.0",
+    "node-unrar-js": "^2.0.2",
     "nodejs-file-downloader": "^4.12.1",
     "prompt-sync": "^4.2.0",
     "unzipper": "^0.10.14",

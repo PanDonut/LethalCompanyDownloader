@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import {playAudioFile} from 'audic';
 import axios from "axios";
 import * as fs from "fs";
+import { createExtractorFromFile } from "node-unrar-js"
 
 
 const prompt = promptSync({sigint: true});
@@ -44,7 +45,7 @@ async function extractRarArchive(file, destination) {
   }
 }
 
-async function DownloadGame(uri) {
+async function DownloadGame(uri, data) {
     var s = JSON.stringify(size).split("");
     s.splice(0,9);
     s.splice(s.indexOf(","), 100)
@@ -70,9 +71,7 @@ async function DownloadGame(uri) {
       Log("\n\n\n   Extracting...\n   Please wait")
       const filePath = path.join(__dirname, "save.dat");
       const drive = await fs.readFileSync(filePath);
-      await extractRarArchive(`./common/${fileName}`, `${drive}:/Games/Lethal Company`);
-      const audioFilePath = path.join(__dirname, "assets/IcecreamTruckV2.wav");
-      await playAudioFile(audioFilePath);
+      await extractRarArchive(`./common/${fileName}`, `${drive}:/Games/Lethal Company`);   
       ExecuteCommand("mods", data)
     } catch (error) {
       console.log(error);
@@ -119,13 +118,26 @@ async function ExecuteCommand(command, data) {
     if ("download".includes(cmd)) {
       currentState = "download"
       Log(chalk.hex("#4AF626").bold(`   Starting download...`));
-      DownloadGame(data.data.uri);
+      DownloadGame(data.data.uri, data);
     } else if ("mods".includes(cmd)) {
       currentState = "mods"
       Log(chalk.hex("#4AF626").bold(`   Downloading mods...`));
-      await data.data.mods.forEach(async element => {
-        await DownloadMod(element.name, element.uri);
+      var bar = new Promise(async (resolve, reject) => {
+        await data.data.mods.forEach(async (element, index, array) => {
+          await DownloadMod(element.name, element.uri);
+          if (index === array.length -1) resolve();
+        });
       });
+      bar.then(async () => {
+        const audioFilePath = path.join(__dirname, "assets/IcecreamTruckV2.wav");
+        await playAudioFile(audioFilePath);
+      });      
+    } else if ("help".includes(cmd)) {
+      Init()
+    } else if ("init".includes(cmd)) {
+      Init()
+    } else if ("start".includes(cmd)) {
+      Init()
     } else {
       const filePath = path.join(__dirname, "assets/TerminalTypoError.wav");
       await playAudioFile(filePath);
@@ -149,7 +161,7 @@ async function Init() {
   const filePath = path.join(__dirname, "save.dat");
   const read = fs.existsSync(filePath);
   if (read == false) {
-    await Log(chalk.hex("#4AF626").bold(`\n\n\n   What's your favourite drive letter? \n\n\n`));
+    await Log(chalk.hex("#4AF626").bold(`\n\n   What's your favourite drive letter? \n\n\n`));
     const command = prompt(chalk.hex("#4AF626").bold(`   >`));
     if (command.split("").length == 1) {
       await Log(chalk.hex("#4AF626").bold(`\n\n\n   Alright, the disk that will be used is: ${command.toUpperCase()}\n\n\n   >`));
