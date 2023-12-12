@@ -8,7 +8,9 @@ import {playAudioFile} from 'audic';
 import axios from "axios";
 import * as fs from "fs";
 import { createExtractorFromFile } from "node-unrar-js"
+import os from "os";
 
+var orange = true;
 
 const prompt = promptSync({sigint: true});
 
@@ -22,12 +24,58 @@ let lastProgress = 0;
 
 let fileName = "";
 
+let loader;
+let timeout;
+
 async function Log(string) {
     console.clear();
     if (currentState != "") {
-      console.log(chalk.hex("#4AF626").bold(">" + currentState.toUpperCase() + "\n \n"));
+      if (orange == false) {
+        console.log(chalk.hex("#4AF626").bold(">" + currentState.toUpperCase() + "\n \n"));
+      } else {
+        console.log(chalk.hex("#e86100").bold(">" + currentState.toUpperCase() + "\n \n"));
+      }
     }
-    console.log(chalk.hex("#4AF626").bold(string));
+    if (orange == false) {
+      console.log(chalk.hex("#4AF626").bold(string));
+    } else {
+      console.log(chalk.hex("#e86100").bold(string));
+    }
+}
+
+function Loader() {
+  loader = setInterval(() => {
+    currentState = "  |"
+    Log("")
+    timeout = setTimeout(() => {
+      currentState = "  /"
+      Log("")
+      timeout = setTimeout(() => {
+        currentState = "  -"
+        Log("")
+        timeout = setTimeout(() => {
+          currentState = "  \ "
+          Log("")
+          timeout = setTimeout(() => {
+            currentState = "  |"
+            Log("")
+            timeout = setTimeout(() => {
+              currentState = "  /"
+              Log("")
+              timeout = setTimeout(() => {
+                currentState = "  -"
+                Log("")
+                timeout = setTimeout(() => {
+                  currentState = "  \ "
+                  Log("")
+                }, 200)
+              }, 200)
+            }, 200)
+          }, 200)
+        }, 200)
+      }, 200)
+    }, 200)
+  }, 1600)
 }
 
 async function extractRarArchive(file, destination) {
@@ -113,7 +161,7 @@ async function DownloadMod(name, uri) {
 }
 
 async function DownloadCrack(uri) {
-  currentState = name;
+  currentState = "crack";
   var s = JSON.stringify(size).split("");
   s.splice(0,9);
   s.splice(s.indexOf(","), 100)
@@ -135,11 +183,11 @@ async function DownloadCrack(uri) {
 
   try {
     await downloader.download();
-    currentState = "cracking"
+    currentState = "crack"
     Log("\n\n\n   Extracting...\n   Please wait")
     const filePath = path.join(__dirname, "save.dat");
     const drive = await fs.readFileSync(filePath);
-    await extractRarArchive(`./common/mods/${fileName}`, `${drive}:/Games/Lethal Company`);
+    await extractRarArchive(`./common/crack/${fileName}`, `${drive}:/Games/Lethal Company`);
     const audioFilePath = path.join(__dirname, "assets/IcecreamTruckV2.wav");
     await playAudioFile(audioFilePath);
   } catch (error) {
@@ -166,6 +214,10 @@ async function ExecuteCommand(command, data) {
       bar.then(async () => {
         DownloadCrack(data.data.crack)
       });      
+    } else if ("crack".includes(cmd)) {
+      currentState = "crack"
+      Log(chalk.hex("#4AF626").bold(`   Downloading crack...`));
+      await DownloadCrack(data.data.crack);   
     } else if ("help".includes(cmd)) {
       Init()
     } else if ("init".includes(cmd)) {
@@ -189,9 +241,58 @@ async function ExecuteCommand(command, data) {
 }
 
 async function Init() {
+  orange = true;
+  const cpu = os.cpus()[0].model.replace(" CPU", "").split("");
+  cpu.splice(cpu.indexOf("@") + 1, 100);
+  const afilePath = path.join(__dirname, "assets/BootUp.wav");
+  setTimeout(() => {
+    currentState = " _____________________________________________ "
+    Log("")
+  }, 0)
+  setTimeout(() => {
+    currentState = ` _____________________________________________ \n\n  CPU: ${cpu.join("").replace("@", "at ") + os.cpus()[0].speed}MHz`
+    Log("")
+  }, 300)
+  setTimeout(() => {
+    currentState = ` _____________________________________________ \n\n  CPU: ${cpu.join("").replace("@", "at ") + os.cpus()[0].speed}MHz\n  RAM: ${os.totalmem() / 1024}K OK`
+    Log("")
+  }, 600)
+  setTimeout(() => {
+    currentState = ` _____________________________________________ \n\n  CPU: ${cpu.join("").replace("@", "at ") + os.cpus()[0].speed}MHz\n  RAM: ${os.totalmem() / 1024}K OK\n  SYSTEMS: OK`
+    Log("")
+  }, 900)
+  setTimeout(() => {
+    currentState = ` _____________________________________________ \n\n  CPU: ${cpu.join("").replace("@", "at ") + os.cpus()[0].speed}MHz\n  RAM: ${os.totalmem() / 1024}K OK\n  SYSTEMS: OK\n\n  Booting...`
+    Log("")
+  }, 1200)
+  setTimeout(() => {
+    currentState = ` _____________________________________________ \n\n  CPU: ${cpu.join("").replace("@", "at ") + os.cpus()[0].speed}MHz\n  RAM: ${os.totalmem() / 1024}K OK\n  SYSTEMS: OK\n\n  Booting...\n\n\n\n  Loading system...`
+    Log("")
+  }, 1500)
+  setTimeout(() => {
+    currentState = ` _____________________________________________ \n\n  CPU: ${cpu.join("").replace("@", "at ") + os.cpus()[0].speed}MHz\n  RAM: ${os.totalmem() / 1024}K OK\n  SYSTEMS: OK\n\n  Booting...\n\n\n\n  Loading system...\n\n\n\n  Fetching data...`
+    Log("")
+  }, 1800)
+  setTimeout(() => {
+    currentState = ` _____________________________________________ \n\n  CPU: ${cpu.join("").replace("@", "at ") + os.cpus()[0].speed}MHz\n  RAM: ${os.totalmem() / 1024}K OK\n  SYSTEMS: OK\n\n  Booting...\n\n\n\n  Loading system...\n\n\n\n  Fetching data...\n\n\n\n  OK`
+    Log("")
+  }, 2100)
+  setTimeout(() => {
+    currentState = ` _____________________________________________ \n\n  CPU: ${cpu.join("").replace("@", "at ") + os.cpus()[0].speed}MHz\n  RAM: ${os.totalmem() / 1024}K OK\n  SYSTEMS: OK\n\n  Booting...\n\n\n\n  Loading system...\n\n\n\n  Fetching data...\n\n\n\n  OK\n _____________________________________________ `
+    Log("")
+  }, 2400)
+  setTimeout(() => {
+    currentState = ``
+    Log("")
+    Loader();
+  }, 2700)
+  await playAudioFile(afilePath);
+  clearInterval(loader);
+  clearTimeout(timeout);
   currentState = "init"
   await Log("");
   await Log("   Initializing...\n   ");
+  orange = false;
   const filePath = path.join(__dirname, "save.dat");
   const read = fs.existsSync(filePath);
   if (read == false) {
