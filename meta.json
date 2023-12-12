@@ -1,9 +1,9 @@
 {
-  "uri": "https://www.dropbox.com/scl/fi/ju52g4kxacqz1czm66kq9/Lethal.Company.v40.zip?rlkey=oa7p6xhzb8urwseqhm7ipgbeh&dl=1",
+  "uri": "https://www.dropbox.com/scl/fi/dioe75xdkrcz0v5cefe05/v40.rar?rlkey=ydwkhj11owax2lpubk65b7v8z&dl=1",
   "mods": [
     {
       "name": "BepInEx",
-      "uri": "https://github.com/BepInEx/BepInEx/releases/download/v5.4.22/BepInEx_x64_5.4.22.0.zip"
+      "uri": "https://www.dropbox.com/scl/fi/rgmes87xgdzgk9bj49pcl/BepInExPack.rar?rlkey=4lrufti2im7zd362648t275op&dl=1"
     }
   ]
 }

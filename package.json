@@ -3,9 +3,20 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "convert": "babel . -d lib",
+    "build": "npm run convert && pkg ./lib/index.js --target node18-win-x64 -o build/SGMS-API.exe"
+  },
+  "pkg": {
+    "scripts": [
+      "index.js"
+    ],
+    "options": [
+      "experimental-modules"
+    ]
   },
   "author": "",
   "license": "ISC",
@@ -13,11 +24,9 @@
     "audic": "^3.0.2",
     "axios": "^1.6.2",
     "chalk": "^5.3.0",
-    "node-unrar-js": "^2.0.2",
     "nodejs-file-downloader": "^4.12.1",
-    "play-sound": "^1.1.6",
     "prompt-sync": "^4.2.0",
-    "sound-play": "^1.1.0",
+    "unzipper": "^0.10.14",
     "window-size": "^1.1.1"
   }
 }
