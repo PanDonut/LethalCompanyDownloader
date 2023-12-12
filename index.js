@@ -158,7 +158,9 @@ async function Init() {
         Init();
       }, 2500)   
     } else {
-      await Log(chalk.hex("#4AF626").bold(`\n\n\n   That's not a disk letter, dumbass\n\n\n   >`));
+      const filePath = path.join(__dirname, "assets/TerminalTypoError.wav");
+      await playAudioFile(filePath);
+      Log(chalk.hex("#4AF626").bold("\n\n   [There was no action supplied with the word.]\n\n"))
       setTimeout(() => {
         Init();
       }, 2000)
