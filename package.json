@@ -11,7 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "audic": "^3.0.2",
+    "axios": "^1.6.2",
     "chalk": "^5.3.0",
+    "node-unrar-js": "^2.0.2",
     "nodejs-file-downloader": "^4.12.1",
     "play-sound": "^1.1.6",
     "prompt-sync": "^4.2.0",
