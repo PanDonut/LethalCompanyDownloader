@@ -4,11 +4,12 @@ import Downloader from "nodejs-file-downloader";
 import promptSync from 'prompt-sync'; 
 import path from "path"
 import { fileURLToPath } from 'url';
-import {playAudioFile} from 'audic';
 import axios from "axios";
 import * as fs from "fs";
 import { createExtractorFromFile } from "node-unrar-js"
 import os from "os";
+import { execSync } from "child_process";
+import { playAudioFile } from "audic";
 
 var orange = true;
 
@@ -41,6 +42,10 @@ async function Log(string) {
     } else {
       console.log(chalk.hex("#e86100").bold(string));
     }
+}
+
+async function PlaySound(path) {
+  await execSync(`.\\binaries\\vlc-3.0.16\\vlc -I null --play-and-exit "${path}"`);
 }
 
 function Loader() {
@@ -93,7 +98,7 @@ async function extractRarArchive(file, destination) {
   }
 }
 
-async function DownloadGame(uri, data) {
+async function DownloadGame(uri, data, ver) {
     var s = JSON.stringify(size).split("");
     s.splice(0,9);
     s.splice(s.indexOf(","), 100)
@@ -120,7 +125,7 @@ async function DownloadGame(uri, data) {
       const filePath = path.join(__dirname, "save.dat");
       const drive = await fs.readFileSync(filePath);
       await extractRarArchive(`./common/${fileName}`, `${drive}:/Games/Lethal Company`);   
-      ExecuteCommand("mods", data)
+      ExecuteCommand("mods", data, ver)
     } catch (error) {
       console.log(error);
     }
@@ -195,25 +200,51 @@ async function DownloadCrack(uri) {
   }
 }
 
-async function ExecuteCommand(command, data) {
+async function ExecuteCommand(command, data, ver = undefined) {
   const cmd = command.toLowerCase();
   if (command.split("").length >= 3) {
     if ("download".includes(cmd)) {
-      currentState = "download"
-      Log(chalk.hex("#4AF626").bold(`   Starting download...`));
-      DownloadGame(data.data.uri, data);
+      currentState = "download"      
+      Log(chalk.hex("#4AF626").bold(`\n\n   Choose the version you want to download\n\n\n${(Object.entries(data.data).map(item => { return `   ${item[0]}\n\n`})).toString().replace(",","")} \n\n\n`));
+      const wait = prompt(chalk.hex("#4AF626").bold(`   >`));
+      if (data.data[wait]) {
+        Log(chalk.hex("#4AF626").bold(`   Starting download...`));
+        DownloadGame(data.data[wait].uri, data, wait);
+      } else {
+        currentState = "";
+        ExecuteCommand("err", data);
+      }
     } else if ("mods".includes(cmd)) {
       currentState = "mods"
-      Log(chalk.hex("#4AF626").bold(`   Downloading mods...`));
-      var bar = new Promise(async (resolve, reject) => {
-        await data.data.mods.forEach(async (element, index, array) => {
-          await DownloadMod(element.name, element.uri);
-          if (index === array.length -1) resolve();
+      if (ver != undefined) {
+        Log(chalk.hex("#4AF626").bold(`   Downloading mods...`));
+        var bar = new Promise(async (resolve, reject) => {
+          await data.data[ver].mods.forEach(async (element, index, array) => {
+            await DownloadMod(element.name, element.uri);
+            if (index === array.length -1) resolve();
+          });
         });
-      });
-      bar.then(async () => {
-        DownloadCrack(data.data.crack)
-      });      
+        bar.then(async () => {
+          DownloadCrack(data.data[ver].crack)
+        }); 
+      } else {
+        const wait = prompt(chalk.hex("#4AF626").bold(`   >`));
+        if (data.data[wait]) {
+          Log(chalk.hex("#4AF626").bold(`   Downloading mods...`));
+          var bar = new Promise(async (resolve, reject) => {
+            await data.data[wait].mods.forEach(async (element, index, array) => {
+              await DownloadMod(element.name, element.uri);
+              if (index === array.length -1) resolve();
+            });
+          });
+          bar.then(async () => {
+            DownloadCrack(data.data[wait].crack)
+          }); 
+        } else {
+          currentState = "";
+          ExecuteCommand("err", data);
+        }
+      }         
     } else if ("crack".includes(cmd)) {
       currentState = "crack"
       Log(chalk.hex("#4AF626").bold(`   Downloading crack...`));
@@ -225,16 +256,16 @@ async function ExecuteCommand(command, data) {
     } else if ("start".includes(cmd)) {
       Init()
     } else {
+      Log(chalk.hex("#4AF626").bold("\n\n   [There was no action supplied with the word.]\n\n"))
       const filePath = path.join(__dirname, "assets/TerminalTypoError.wav");
       await playAudioFile(filePath);
-      Log(chalk.hex("#4AF626").bold("\n\n   [There was no action supplied with the word.]\n\n"))
       const wait = prompt(chalk.hex("#4AF626").bold(`   `));
       ExecuteCommand(wait, data);
     }
   } else {
-    const filePath = path.join(__dirname, "assets/TerminalTypoError.wav");
-    await playAudioFile(filePath);
     Log(chalk.hex("#4AF626").bold("\n\n   [There was no action supplied with the word.]\n\n"))
+    const filePath = path.join(__dirname, "assets/TerminalTypoError.wav");
+      await playAudioFile(filePath);
     const wait = prompt(chalk.hex("#4AF626").bold(`   `));
     ExecuteCommand(wait, data);
   }
@@ -282,8 +313,6 @@ async function Init() {
     Log("")
   }, 2400)
   setTimeout(() => {
-    currentState = ``
-    Log("")
     Loader();
   }, 2700)
   await playAudioFile(afilePath);
