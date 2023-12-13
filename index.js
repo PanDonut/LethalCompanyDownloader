@@ -200,7 +200,7 @@ async function DownloadCrack(uri) {
   }
 }
 
-async function ExecuteCommand(command, data, ver = undefined) {
+async function ExecuteCommand(command, data, ver) {
   const cmd = command.toLowerCase();
   if (command.split("").length >= 3) {
     if ("download".includes(cmd)) {
@@ -216,7 +216,7 @@ async function ExecuteCommand(command, data, ver = undefined) {
       }
     } else if ("mods".includes(cmd)) {
       currentState = "mods"
-      if (ver != undefined) {
+      if (ver) {
         Log(chalk.hex("#4AF626").bold(`   Downloading mods...`));
         var bar = new Promise(async (resolve, reject) => {
           await data.data[ver].mods.forEach(async (element, index, array) => {
@@ -228,6 +228,7 @@ async function ExecuteCommand(command, data, ver = undefined) {
           DownloadCrack(data.data[ver].crack)
         }); 
       } else {
+        Log(chalk.hex("#4AF626").bold(`\n\n   Choose the version you want to mod\n\n\n${(Object.entries(data.data).map(item => { return `   ${item[0]}\n\n`})).toString().replace(",","")} \n\n\n`));
         const wait = prompt(chalk.hex("#4AF626").bold(`   >`));
         if (data.data[wait]) {
           Log(chalk.hex("#4AF626").bold(`   Downloading mods...`));
