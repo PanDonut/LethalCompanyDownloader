@@ -287,14 +287,16 @@ async function Init() {
     Loader();
   }, 2700)
   await playAudioFile(afilePath);
-  clearInterval(loader);
-  clearTimeout(timeout);
-  currentState = "init"
   await Log("");
-  await Log("   Initializing...\n   ");
-  orange = false;
   const filePath = path.join(__dirname, "save.dat");
   const read = fs.existsSync(filePath);
+
+  clearInterval(loader);
+  clearTimeout(timeout);
+  orange = false;
+  currentState = "";
+  await Log("");
+
   if (read == false) {
     await Log(chalk.hex("#4AF626").bold(`\n\n   What's your favourite drive letter? \n\n\n`));
     const command = prompt(chalk.hex("#4AF626").bold(`   >`));
