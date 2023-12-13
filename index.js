@@ -8,10 +8,36 @@ import axios from "axios";
 import * as fs from "fs";
 import { createExtractorFromFile } from "node-unrar-js"
 import os from "os";
-import { execSync } from "child_process";
+import { exec } from "child_process";
 import { playAudioFile } from "audic";
+import settingsbase from "./settings.js";
+import proc from "node:process"
 
 var orange = true;
+proc.on('beforeExit', (code) => {
+  const settings = fs.readFile(`${process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json`, (err,data) => {
+    if (err) throw err
+    var dataO = JSON.parse(data);
+    dataO.profiles.list = settingsbase(true);
+    fs.writeFile(`${process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json`, JSON.stringify(dataO), {}, () => { proc.exit() })
+  })
+});
+proc.on('exit', (code) => {
+  const settings = fs.readFile(`${process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json`, (err,data) => {
+    if (err) throw err
+    var dataO = JSON.parse(data);
+    dataO.profiles.list = settingsbase(true);
+    fs.writeFile(`${process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json`, JSON.stringify(dataO), {}, () => { proc.exit() })
+  })
+});
+proc.on('disconnect', (code) => {
+  const settings = fs.readFile(`${process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json`, (err,data) => {
+    if (err) throw err
+    var dataO = JSON.parse(data);
+    dataO.profiles.list = settingsbase(true);
+    fs.writeFile(`${process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json`, JSON.stringify(dataO), {}, () => { proc.exit() })
+  })
+});
 
 const prompt = promptSync({sigint: true});
 
@@ -44,35 +70,31 @@ async function Log(string) {
     }
 }
 
-async function PlaySound(path) {
-  await execSync(`.\\binaries\\vlc-3.0.16\\vlc -I null --play-and-exit "${path}"`);
-}
-
-function Loader() {
+function Loader(string = "") {
   loader = setInterval(() => {
     currentState = "  |"
-    Log("")
+    Log(string)
     timeout = setTimeout(() => {
       currentState = "  /"
-      Log("")
+      Log(string)
       timeout = setTimeout(() => {
         currentState = "  -"
-        Log("")
+        Log(string)
         timeout = setTimeout(() => {
-          currentState = "  \ "
-          Log("")
+          currentState = "  \\"
+          Log(string)
           timeout = setTimeout(() => {
             currentState = "  |"
-            Log("")
+            Log(string)
             timeout = setTimeout(() => {
               currentState = "  /"
-              Log("")
+              Log(string)
               timeout = setTimeout(() => {
                 currentState = "  -"
-                Log("")
+                Log(string)
                 timeout = setTimeout(() => {
-                  currentState = "  \ "
-                  Log("")
+                  currentState = "  \\"
+                  Log(string)
                 }, 200)
               }, 200)
             }, 200)
@@ -99,6 +121,7 @@ async function extractRarArchive(file, destination) {
 }
 
 async function DownloadGame(uri, data, ver) {
+    var logger = "";
     var s = JSON.stringify(size).split("");
     s.splice(0,9);
     s.splice(s.indexOf(","), 100)
@@ -109,8 +132,7 @@ async function DownloadGame(uri, data, ver) {
         if (lastProgress != Math.floor(percentage) && Math.ceil(percentage) < 99) {
           lastProgress = Math.floor(percentage);
           Log(`[${ "■".repeat(Math.round((percentage / 100) * (parseInt(s.join("")) - 2)) / 1) }${" ".repeat(Math.abs((parseInt(s.join("")) - 2) - (Math.floor((percentage / 100) * (parseInt(s.join("")))) + 1)))}]
-          \nRemaining: ${Math.ceil((remainingSize / 1024) / 1024)} mb
-          `);
+          \nRemaining: ${Math.ceil((remainingSize / 1024) / 1024)} mb`);
         }
       },
       onBeforeSave: (name) => {
@@ -119,11 +141,12 @@ async function DownloadGame(uri, data, ver) {
     });
   
     try {
+      const filePathD = path.join(__dirname, "save.dat");
+      const drive = await fs.readFileSync(filePathD);
+      const del = fs.rm(`${drive}:\\Games\\Lethal Company`, {recursive: true, force: true},() => {})
       await downloader.download();
       currentState = "install"
       Log("\n\n\n   Extracting...\n   Please wait")
-      const filePath = path.join(__dirname, "save.dat");
-      const drive = await fs.readFileSync(filePath);
       await extractRarArchive(`./common/${fileName}`, `${drive}:/Games/Lethal Company`);   
       ExecuteCommand("mods", data, ver)
     } catch (error) {
@@ -194,7 +217,9 @@ async function DownloadCrack(uri) {
     const drive = await fs.readFileSync(filePath);
     await extractRarArchive(`./common/crack/${fileName}`, `${drive}:/Games/Lethal Company`);
     const audioFilePath = path.join(__dirname, "assets/IcecreamTruckV2.wav");
+    Log("\n\n\n   DONE\n   Now go keep The Company happy!")
     await playAudioFile(audioFilePath);
+    Log("\n\n\n   HELP ME! PLEASE, HELP. I'M STUCK HERE! HELP! THEY WON'T LET ME OUT")
   } catch (error) {
     console.log(error);
   }
@@ -249,7 +274,19 @@ async function ExecuteCommand(command, data, ver) {
     } else if ("crack".includes(cmd)) {
       currentState = "crack"
       Log(chalk.hex("#4AF626").bold(`   Downloading crack...`));
-      await DownloadCrack(data.data.crack);   
+
+      if (ver) {
+        await DownloadCrack(data.data[ver].crack);   
+      } else {
+        Log(chalk.hex("#4AF626").bold(`\n\n   Choose the version you want to mod\n\n\n${(Object.entries(data.data).map(item => { return `   ${item[0]}\n\n`})).toString().replace(",","")} \n\n\n`));
+        const wait = prompt(chalk.hex("#4AF626").bold(`   >`));
+        if (data.data[wait]) {
+          await DownloadCrack(data.data[wait].crack);   
+        } else {
+          currentState = "";
+          ExecuteCommand("err", data);
+        }
+      }  
     } else if ("help".includes(cmd)) {
       Init()
     } else if ("init".includes(cmd)) {
@@ -277,6 +314,12 @@ async function Init() {
   const cpu = os.cpus()[0].model.replace(" CPU", "").split("");
   cpu.splice(cpu.indexOf("@") + 1, 100);
   const afilePath = path.join(__dirname, "assets/BootUp.wav");
+  const settings = fs.readFile(`${process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json`, (err,data) => {
+    if (err) throw err
+    var dataO = JSON.parse(data);
+    dataO.profiles.list = settingsbase(false);
+    fs.writeFile(`${process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json`, JSON.stringify(dataO), {}, () => {})
+  })
   setTimeout(() => {
     currentState = " _____________________________________________ "
     Log("")
